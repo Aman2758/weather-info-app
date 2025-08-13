@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Maps - Interactive Weather Visualization</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      overflow-x: hidden;
+    }
+
+    /* Advanced Animation Keyframes */
+    @keyframes floatUpDown {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+
+    @keyframes rotate3D {
+      0% { transform: rotateY(0deg) rotateX(0deg); }
+      50% { transform: rotateY(180deg) rotateX(10deg); }
+      100% { transform: rotateY(360deg) rotateX(0deg); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.3); }
+      50% { box-shadow: 0 0 40px rgba(102, 126, 234, 0.6), 0 0 60px rgba(102, 126, 234, 0.4); }
+    }
+
+    @keyframes morphingGradient {
+      0% { background: linear-gradient(45deg, #667eea, #764ba2); }
+      25% { background: linear-gradient(45deg, #764ba2, #f093fb); }
+      50% { background: linear-gradient(45deg, #f093fb, #f5576c); }
+      75% { background: linear-gradient(45deg, #f5576c, #4facfe); }
+      100% { background: linear-gradient(45deg, #4facfe, #667eea); }
+    }
+
+    @keyframes waveEffect {
+      0% { transform: translateX(-100%) translateY(0); }
+      50% { transform: translateX(0%) translateY(-10px); }
+      100% { transform: translateX(100%) translateY(0); }
+    }
+
+    @keyframes neonGlow {
+      0%, 100% { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor; }
+      50% { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 30px currentColor, 0 0 40px currentColor; }
+    }
+
+    @keyframes slideInFromLeft {
+      from { opacity: 0; transform: translateX(-50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInFromRight {
+      from { opacity: 0; transform: translateX(50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes zoomInOut {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes rippleEffect {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(4); opacity: 0; }
+    }
+
+    @keyframes breathing {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0; transform: scale(0) rotate(0deg); }
+      50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    }
+
+    @keyframes magneticPull {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @keyframes typewriter {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+
+    /* Particle System */
+    .particle-system {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      font-size: 1.5rem;
+      animation: particleFloat 8s linear infinite;
+      opacity: 0.6;
+    }
+
+    @keyframes particleFloat {
+      0% { transform: translateY(0px) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    .particle-1 { top: 10%; left: 10%; animation-delay: 0s; animation-duration: 12s; }
+    .particle-2 { top: 20%; right: 15%; animation-delay: 2s; animation-duration: 15s; }
+    .particle-3 { top: 60%; left: 20%; animation-delay: 4s; animation-duration: 10s; }
+    .particle-4 { top: 30%; right: 30%; animation-delay: 6s; animation-duration: 18s; }
+    .particle-5 { top: 70%; right: 10%; animation-delay: 8s; animation-duration: 14s; }
+    .particle-6 { top: 80%; left: 60%; animation-delay: 10s; animation-duration: 16s; }
+    .particle-7 { top: 15%; left: 50%; animation-delay: 12s; animation-duration: 13s; }
+    .particle-8 { top: 50%; right: 50%; animation-delay: 14s; animation-duration: 11s; }
+    .particle-9 { top: 90%; left: 30%; animation-delay: 16s; animation-duration: 17s; }
+    .particle-10 { top: 40%; left: 80%; animation-delay: 18s; animation-duration: 19s; }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      color: white;
+      position: relative;
+      animation: slideInFromLeft 1s ease-out;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+      animation: morphingGradient 5s ease-in-out infinite;
+    }
+
+    .header h1 {
+      font-size: 2.8rem;
+      margin-bottom: 15px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .header h1::after {
+      content: '🗺️';
+      position: absolute;
+      top: -10px;
+      right: -40px;
+      font-size: 2rem;
+      animation: floatUpDown 3s ease-in-out infinite;
+    }
+
+    .header p {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+      animation: slideInFromRight 1s ease-out 0.3s both;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 25px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3);
+      animation: morphingGradient 2s ease-in-out infinite;
+    }
+
+    .btn.active {
+      background: rgba(255, 255, 255, 0.4);
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    .btn i {
+      margin-right: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover i {
+      animation: rotate3D 1s ease-in-out infinite;
+      transform: scale(1.2);
+    }
+
+    .map-container {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+      animation: zoomInOut 0.8s ease-out 0.6s both;
+    }
+
+    .map-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+      animation: waveEffect 4s ease-in-out infinite;
+    }
+
+    .map-container::after {
+      content: '';
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, rgba(102, 126, 234, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      animation: pulseGlow 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    #weatherMap {
+      height: 500px;
+      border-radius: 15px;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    #weatherMap:hover {
+      transform: scale(1.01);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    }
+
+    .info {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 25px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+      animation: slideInFromLeft 1s ease-out 0.9s both;
+    }
+
+    .info::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+      animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .info h3 {
+      color: #2c3e50;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .info p {
+      color: #34495e;
+      line-height: 1.6;
+      font-size: 1.1rem;
+      font-weight: 500;
+    }
+
+    /* Weather Data Display */
+    .weather-data {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 15px;
+      margin-top: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+      animation: slideInFromRight 1s ease-out 1.2s both;
+      text-align: center;
+    }
+
+    .weather-data::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+      animation: waveEffect 8s ease-in-out infinite;
+    }
+
+    .weather-data h4 {
+      color: #2c3e50;
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .weather-data p {
+      color: #34495e;
+      font-size: 1rem;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    /* Ripple Effect */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(0);
+      animation: rippleEffect 0.6s linear;
+      pointer-events: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 2.2rem;
+      }
+      
+      .controls {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .btn {
+        width: 200px;
+      }
+      
+      #weatherMap {
+        height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Advanced Animation Particles -->
+  <div class="particle-system">
+    <div class="particle particle-1">🌤️</div>
+    <div class="particle particle-2">☁️</div>
+    <div class="particle particle-3">🌤️</div>
+    <div class="particle particle-4">⛅</div>
+    <div class="particle particle-5">🌥️</div>
+    <div class="particle particle-6">🌈</div>
+    <div class="particle particle-7">✨</div>
+    <div class="particle particle-8">⭐</div>
+    <div class="particle particle-9">🌟</div>
+    <div class="particle particle-10">💫</div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-map"></i> Weather Maps</h1>
+      <p>Interactive weather visualization</p>
+    </div>
+    
+    <div class="controls">
+      <button onclick="showTemperatureMap()" class="btn active" id="tempBtn">
+        <i class="fas fa-thermometer-half"></i> Temperature
+      </button>
+      <button onclick="showPrecipitationMap()" class="btn" id="precipBtn">
+        <i class="fas fa-cloud-rain"></i> Precipitation
+      </button>
+      <button onclick="showWindMap()" class="btn" id="windBtn">
+        <i class="fas fa-wind"></i> Wind
+      </button>
+      <button onclick="showSatelliteMap()" class="btn" id="satelliteBtn">
+        <i class="fas fa-satellite"></i> Satellite
+      </button>
+    </div>
+    
+    <div class="map-container">
+      <div id="weatherMap"></div>
+    </div>
+    
+    <div class="info" id="info">
+      <h3>Weather Maps Ready!</h3>
+      <p>Click the buttons above to switch between different weather layers.</p>
+    </div>
+  </div>
+
+  <script>
+    let weatherMap = null;
+    let weatherData = null;
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add advanced animations
+      addAdvancedAnimations();
+      
+      // Try to get weather data from localStorage first
+      let weatherDataParam = localStorage.getItem('weatherMapsData');
+      
+      // If not in localStorage, try URL parameters as fallback
+      if (!weatherDataParam) {
+        const urlParams = new URLSearchParams(window.location.search);
+        weatherDataParam = urlParams.get('data');
+        if (weatherDataParam) {
+          try {
+            weatherDataParam = decodeURIComponent(weatherDataParam);
+          } catch (error) {
+            console.error('Error decoding URL parameter:', error);
+          }
+        }
+      }
+      
+      if (weatherDataParam) {
+        try {
+          weatherData = JSON.parse(weatherDataParam);
+          initializeMap();
+          showTemperatureMap();
+          updateInfo();
+          // Clear the data from localStorage after using it
+          localStorage.removeItem('weatherMapsData');
+        } catch (error) {
+          console.error('Error parsing weather data:', error);
+          document.getElementById('info').innerHTML = '<h3>Error</h3><p>Invalid weather data</p>';
+        }
+      } else {
+        document.getElementById('info').innerHTML = '<h3>No Weather Data</h3><p>Please open this page from the main weather app.</p>';
+      }
+    });
+    
+    // Advanced Animation Functions
+    function addAdvancedAnimations() {
+      // Add ripple effect to all buttons
+      addRippleEffect();
+      
+      // Add magnetic effect to interactive elements
+      addMagneticEffect();
+      
+      // Add sparkle effects
+      addSparkleEffects();
+    }
+
+    function addRippleEffect() {
+      const buttons = document.querySelectorAll('.btn');
+      
+      buttons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          const ripple = document.createElement('span');
+          const rect = this.getBoundingClientRect();
+          const size = Math.max(rect.width, rect.height);
+          const x = e.clientX - rect.left - size / 2;
+          const y = e.clientY - rect.top - size / 2;
+          
+          ripple.style.width = ripple.style.height = size + 'px';
+          ripple.style.left = x + 'px';
+          ripple.style.top = y + 'px';
+          ripple.classList.add('ripple');
+          
+          this.appendChild(ripple);
+          
+          setTimeout(() => {
+            ripple.remove();
+          }, 600);
+        });
+      });
+    }
+
+    function addMagneticEffect() {
+      const magneticElements = document.querySelectorAll('.btn, .map-container');
+      
+      magneticElements.forEach(element => {
+        element.addEventListener('mousemove', function(e) {
+          const rect = this.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          
+          this.style.transform = `translate(${x * 0.05}px, ${y * 0.05}px)`;
+        });
+        
+        element.addEventListener('mouseleave', function() {
+          this.style.transform = 'translate(0, 0)';
+        });
+      });
+    }
+
+    function addSparkleEffects() {
+      // Add random sparkles to the page (less frequent)
+      setInterval(() => {
+        const sparkle = document.createElement('div');
+        sparkle.innerHTML = '✨';
+        sparkle.style.position = 'fixed';
+        sparkle.style.left = Math.random() * window.innerWidth + 'px';
+        sparkle.style.top = Math.random() * window.innerHeight + 'px';
+        sparkle.style.fontSize = '1.2rem';
+        sparkle.style.pointerEvents = 'none';
+        sparkle.style.zIndex = '1000';
+        sparkle.style.animation = 'sparkle 2s ease-in-out forwards';
+        
+        document.body.appendChild(sparkle);
+        
+        setTimeout(() => {
+          sparkle.remove();
+        }, 2000);
+      }, 8000);
+    }
+    
+    function initializeMap() {
+      if (weatherMap) {
+        weatherMap.remove();
+      }
+      
+      weatherMap = L.map('weatherMap').setView([0, 0], 2);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(weatherMap);
+    }
+    
+    function showTemperatureMap() {
+      if (!weatherMap) initializeMap();
+      
+      weatherMap.eachLayer((layer) => {
+        if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) return;
+        weatherMap.removeLayer(layer);
+      });
+      
+      if (weatherData) {
+        const { lat, lon } = weatherData.coord;
+        const temp = weatherData.main.temp;
+        
+        L.circleMarker([lat, lon], {
+          radius: 20,
+          fillColor: getTemperatureColor(temp),
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(weatherMap).bindPopup(`
+          <div style="text-align: center;">
+            <h4>${weatherData.name}</h4>
+            <p style="font-size: 24px; font-weight: bold;">${temp}°C</p>
+            <p>${weatherData.weather[0].main}</p>
+          </div>
+        `);
+        
+        weatherMap.setView([lat, lon], 10);
+      }
+      
+      updateButtons('tempBtn');
+    }
+    
+    function showPrecipitationMap() {
+      if (!weatherMap) initializeMap();
+      
+      weatherMap.eachLayer((layer) => {
+        if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) return;
+        weatherMap.removeLayer(layer);
+      });
+      
+      if (weatherData) {
+        const { lat, lon } = weatherData.coord;
+        const humidity = weatherData.main.humidity;
+        
+        L.circleMarker([lat, lon], {
+          radius: 20,
+          fillColor: getHumidityColor(humidity),
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(weatherMap).bindPopup(`
+          <div style="text-align: center;">
+            <h4>${weatherData.name}</h4>
+            <p style="font-size: 24px; font-weight: bold;">${humidity}%</p>
+            <p>Humidity</p>
+          </div>
+        `);
+        
+        weatherMap.setView([lat, lon], 10);
+      }
+      
+      updateButtons('precipBtn');
+    }
+    
+    function showWindMap() {
+      if (!weatherMap) initializeMap();
+      
+      weatherMap.eachLayer((layer) => {
+        if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) return;
+        weatherMap.removeLayer(layer);
+      });
+      
+      if (weatherData) {
+        const { lat, lon } = weatherData.coord;
+        const windSpeed = weatherData.wind.speed;
+        
+        L.circleMarker([lat, lon], {
+          radius: 20,
+          fillColor: getWindColor(windSpeed),
+          color: '#fff',
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.8
+        }).addTo(weatherMap).bindPopup(`
+          <div style="text-align: center;">
+            <h4>${weatherData.name}</h4>
+            <p style="font-size: 24px; font-weight: bold;">${windSpeed} m/s</p>
+            <p>Wind Speed</p>
+          </div>
+        `);
+        
+        weatherMap.setView([lat, lon], 10);
+      }
+      
+      updateButtons('windBtn');
+    }
+    
+    function showSatelliteMap() {
+      if (!weatherMap) initializeMap();
+      
+      weatherMap.eachLayer((layer) => {
+        weatherMap.removeLayer(layer);
+      });
+      
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri'
+      }).addTo(weatherMap);
+      
+      if (weatherData) {
+        const { lat, lon } = weatherData.coord;
+        
+        L.marker([lat, lon]).addTo(weatherMap).bindPopup(`
+          <div style="text-align: center;">
+            <h4>${weatherData.name}</h4>
+            <p>Satellite View</p>
+          </div>
+        `);
+        
+        weatherMap.setView([lat, lon], 10);
+      }
+      
+      updateButtons('satelliteBtn');
+    }
+    
+    function getTemperatureColor(temp) {
+      if (temp < 0) return '#0066cc';
+      if (temp < 10) return '#3399ff';
+      if (temp < 20) return '#66cc66';
+      if (temp < 30) return '#ffcc00';
+      return '#ff6600';
+    }
+    
+    function getHumidityColor(humidity) {
+      if (humidity < 30) return '#ff6600';
+      if (humidity < 60) return '#ffcc00';
+      if (humidity < 80) return '#3399ff';
+      return '#0066cc';
+    }
+    
+    function getWindColor(speed) {
+      if (speed < 5) return '#66cc66';
+      if (speed < 10) return '#ffcc00';
+      if (speed < 15) return '#ff6600';
+      return '#cc0000';
+    }
+    
+    function updateButtons(activeId) {
+      ['tempBtn', 'precipBtn', 'windBtn', 'satelliteBtn'].forEach(id => {
+        document.getElementById(id).classList.remove('active');
+      });
+      document.getElementById(activeId).classList.add('active');
+    }
+    
+    function updateInfo() {
+      if (weatherData) {
+        document.getElementById('info').innerHTML = `
+          <h3>${weatherData.name}, ${weatherData.sys.country}</h3>
+          <p>Temperature: ${weatherData.main.temp}°C | Humidity: ${weatherData.main.humidity}% | Wind: ${weatherData.wind.speed} m/s</p>
+        `;
+      }
+    }
+
+
+  </script>
+</body>
+</html> 

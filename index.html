@@ -4,13 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Weather Info App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <!-- Weather Background Container -->
   <div id="weatherBackground" class="weather-background"></div>
+  
+  <!-- Advanced Animation Particles -->
+  <div class="particle-system">
+    <div class="particle particle-1">🌤️</div>
+    <div class="particle particle-2">☁️</div>
+    <div class="particle particle-3">🌤️</div>
+    <div class="particle particle-4">⛅</div>
+    <div class="particle particle-5">🌥️</div>
+    <div class="particle particle-6">🌈</div>
+    <div class="particle particle-7">✨</div>
+    <div class="particle particle-8">⭐</div>
+    <div class="particle particle-9">🌟</div>
+    <div class="particle particle-10">💫</div>
+  </div>
   
   <!-- Welcome Modal -->
   <div id="welcomeModal" class="welcome-modal">
@@ -109,6 +128,9 @@
       <button onclick="getCurrentLocation()" id="locationBtn">
         <i class="fas fa-location-arrow"></i> <span id="locationBtnText">My Location</span>
       </button>
+      <button onclick="openWeatherMaps()" id="mapsBtn" style="display: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: 600; transition: all 0.3s ease; margin-left: 10px;">
+        <i class="fas fa-map"></i> Open Weather Maps
+      </button>
       
 
     </div>
@@ -125,6 +147,99 @@
     <div id="loadingSpinner" class="loading-spinner hidden" style="display: none;">
       <div class="spinner"></div>
       <p id="loadingText">Scanning weather data...</p>
+    </div>
+
+    <!-- Time Display Section -->
+    <div id="timeDisplay" class="time-display hidden glass-effect scroll-animate-bounce">
+      <div class="time-header">
+        <h3><i class="fas fa-clock"></i> Current Time</h3>
+        <div class="time-controls">
+          <div class="format-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="timeFormatToggle" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-text">24h</span>
+            </label>
+          </div>
+          <div class="timezone-selector">
+            <select id="timezoneSelect" class="timezone-dropdown">
+              <option value="local">Local Time</option>
+              <option value="UTC">UTC (Coordinated Universal Time)</option>
+              <option value="GMT">GMT (Greenwich Mean Time)</option>
+              <option value="EST">EST (Eastern Standard Time)</option>
+              <option value="CST">CST (Central Standard Time)</option>
+              <option value="MST">MST (Mountain Standard Time)</option>
+              <option value="PST">PST (Pacific Standard Time)</option>
+              <option value="AST">AST (Atlantic Standard Time)</option>
+              <option value="HST">HST (Hawaii Standard Time)</option>
+              <option value="CET">CET (Central European Time)</option>
+              <option value="EET">EET (Eastern European Time)</option>
+              <option value="WET">WET (Western European Time)</option>
+              <option value="IST">IST (India Standard Time)</option>
+              <option value="JST">JST (Japan Standard Time)</option>
+              <option value="KST">KST (Korea Standard Time)</option>
+              <option value="CST_CN">CST (China Standard Time)</option>
+              <option value="SGT">SGT (Singapore Time)</option>
+              <option value="AEST">AEST (Australian Eastern Time)</option>
+              <option value="ACST">ACST (Australian Central Time)</option>
+              <option value="AWST">AWST (Australian Western Time)</option>
+              <option value="NZST">NZST (New Zealand Standard Time)</option>
+              <option value="SAST">SAST (South Africa Standard Time)</option>
+              <option value="EAT">EAT (East Africa Time)</option>
+              <option value="WAT">WAT (West Africa Time)</option>
+              <option value="BRT">BRT (Brazil Time)</option>
+              <option value="ART">ART (Argentina Time)</option>
+              <option value="CLT">CLT (Chile Time)</option>
+              <option value="PET">PET (Peru Time)</option>
+              <option value="MST_MX">MST (Mexico Standard Time)</option>
+              <option value="COT">COT (Colombia Time)</option>
+              <option value="VET">VET (Venezuela Time)</option>
+              <option value="GST">GST (Gulf Standard Time)</option>
+              <option value="MSK">MSK (Moscow Time)</option>
+              <option value="YEKT">YEKT (Yekaterinburg Time)</option>
+              <option value="OMST">OMST (Omsk Time)</option>
+              <option value="KRAT">KRAT (Krasnoyarsk Time)</option>
+              <option value="IRKT">IRKT (Irkutsk Time)</option>
+              <option value="YAKT">YAKT (Yakutsk Time)</option>
+              <option value="VLAT">VLAT (Vladivostok Time)</option>
+              <option value="MAGT">MAGT (Magadan Time)</option>
+              <option value="ANAT">ANAT (Anadyr Time)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="time-content">
+        <div class="time-main">
+          <div class="time-digits" id="timeDigits">
+            <span class="hour" id="hourDisplay">--</span>
+            <span class="time-separator">:</span>
+            <span class="minute" id="minuteDisplay">--</span>
+            <span class="time-separator">:</span>
+            <span class="second" id="secondDisplay">--</span>
+            <span class="period" id="periodDisplay"></span>
+          </div>
+          <div class="time-date" id="dateDisplay">Loading...</div>
+        </div>
+        
+        <div class="time-info">
+          <div class="timezone-info" id="timezoneInfo">
+            <i class="fas fa-globe"></i>
+            <span id="currentTimezone">Local Time</span>
+          </div>
+          <div class="day-info" id="dayInfo">
+            <i class="fas fa-calendar-day"></i>
+            <span id="dayName">--</span>
+          </div>
+        </div>
+        
+        <div class="time-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="timeProgress"></div>
+          </div>
+          <div class="progress-text" id="progressText">0% of day completed</div>
+        </div>
+      </div>
     </div>
 
     <div id="weatherResult" class="weather-card hidden glass-effect scroll-animate-bounce"></div>
@@ -311,6 +426,68 @@
               <span>The widget includes beautiful animations and weather data</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Sharing Section -->
+    <div id="socialSharing" class="social-sharing hidden glass-effect scroll-animate-scale">
+      <h3><i class="fas fa-share-alt"></i> Share Weather</h3>
+      <p class="sharing-description">Share your weather experience with friends and family!</p>
+      
+      <div class="sharing-container">
+        <div class="weather-summary" id="weatherSummary">
+          <div class="summary-icon">
+            <i class="fas fa-cloud-sun"></i>
+          </div>
+          <div class="summary-text">
+            <h4 id="summaryLocation">Location</h4>
+            <p id="summaryWeather">Weather description</p>
+            <div class="summary-temp" id="summaryTemp">--°C</div>
+          </div>
+        </div>
+        
+        <div class="social-buttons">
+          <button class="share-btn twitter-btn" onclick="shareToTwitter()">
+            <i class="fab fa-twitter"></i>
+            <span>Twitter</span>
+            <div class="btn-glow"></div>
+          </button>
+          
+          <button class="share-btn facebook-btn" onclick="shareToFacebook()">
+            <i class="fab fa-facebook-f"></i>
+            <span>Facebook</span>
+            <div class="btn-glow"></div>
+          </button>
+          
+          <button class="share-btn whatsapp-btn" onclick="shareToWhatsApp()">
+            <i class="fab fa-whatsapp"></i>
+            <span>WhatsApp</span>
+            <div class="btn-glow"></div>
+          </button>
+          
+          <button class="share-btn telegram-btn" onclick="shareToTelegram()">
+            <i class="fab fa-telegram-plane"></i>
+            <span>Telegram</span>
+            <div class="btn-glow"></div>
+          </button>
+          
+          <button class="share-btn copy-btn" onclick="copyToClipboard()">
+            <i class="fas fa-copy"></i>
+            <span>Copy Link</span>
+            <div class="btn-glow"></div>
+          </button>
+          
+          <button class="share-btn email-btn" onclick="shareViaEmail()">
+            <i class="fas fa-envelope"></i>
+            <span>Email</span>
+            <div class="btn-glow"></div>
+          </button>
+        </div>
+        
+        <div class="share-message" id="shareMessage">
+          <i class="fas fa-check-circle"></i>
+          <span>Link copied to clipboard!</span>
         </div>
       </div>
     </div>

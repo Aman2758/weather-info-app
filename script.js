@@ -601,7 +601,7 @@ function getWeatherByCoords(lat, lon) {
     currentData.airQuality = airQualityData;
     
     // Add a small delay before hiding loading to show "Almost ready..." message
-    setTimeout(() => {
+        setTimeout(() => {
       hideLoading();
       displayWeather(currentData);
       displayForecast(forecastData);
@@ -698,8 +698,20 @@ function displayWeather(data) {
   const unitSymbol = getUnitSymbol();
   const speedUnit = getSpeedUnit();
   
+  // Store current weather data for maps
+  window.currentWeatherData = data;
+  
+  // Update weather maps button
+  updateWeatherMapsButton();
+  
+  // Initialize and display time
+  initializeTimeDisplay();
+  
   // Apply weather-based background
   applyWeatherBackground(data);
+  
+  // Add advanced animations
+  addAdvancedAnimations();
   
   // Convert sunrise/sunset times
   const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString('en-US', { 
@@ -859,6 +871,9 @@ function displayWeather(data) {
   
   // Display weather widgets
   displayWeatherWidgets(data);
+  
+  // Update social sharing
+  updateSocialSharing();
 }
 
 // Display weather tips
@@ -1006,6 +1021,8 @@ function displayWeatherWidgets(data) {
   
   console.log('Weather widgets section displayed successfully');
 }
+
+
 
 // Create weather widget
 function createWidget() {
@@ -2861,18 +2878,952 @@ function triggerScrollAnimations() {
   });
 }
 
+// Weather Maps Functionality
+let weatherMap = null;
+let currentMapType = 'temperature';
+
+// Initialize weather map
+function initializeWeatherMap() {
+  console.log('initializeWeatherMap called');
+  
+  if (typeof L === 'undefined') {
+    console.error('Leaflet library not loaded!');
+    return;
+  }
+  
+  if (weatherMap) {
+    weatherMap.remove();
+  }
+  
+  const mapElement = document.getElementById('weatherMap');
+  if (!mapElement) {
+    console.error('Weather map element not found!');
+    return;
+  }
+  
+  console.log('Creating Leaflet map...');
+  weatherMap = L.map('weatherMap').setView([0, 0], 2);
+  
+  // Add OpenStreetMap tiles
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(weatherMap);
+  
+  // Add map event listeners
+  weatherMap.on('zoomend', updateMapStats);
+  weatherMap.on('moveend', updateMapStats);
+  
+  console.log('Weather map initialized');
+}
+
+// Open weather maps in new window
+function openWeatherMaps() {
+  if (!window.currentWeatherData) {
+    alert('Please get weather data first before opening maps!');
+    return;
+  }
+  
+  const weatherData = window.currentWeatherData;
+  
+  // Store weather data in localStorage instead of URL parameters
+  try {
+    localStorage.setItem('weatherMapsData', JSON.stringify(weatherData));
+  } catch (error) {
+    console.error('localStorage not available, using URL parameters');
+    // Fallback to URL parameters with minimal data
+    const minimalData = {
+      name: weatherData.name,
+      coord: weatherData.coord,
+      main: {
+        temp: weatherData.main.temp,
+        humidity: weatherData.main.humidity
+      },
+      weather: weatherData.weather,
+      wind: weatherData.wind,
+      sys: weatherData.sys
+    };
+    const encodedData = encodeURIComponent(JSON.stringify(minimalData));
+    const mapsUrl = `weather-maps.html?data=${encodedData}`;
+    
+    const mapsWindow = window.open(
+      mapsUrl,
+      'weatherMaps',
+      'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+    );
+    
+    if (mapsWindow) {
+      mapsWindow.focus();
+    }
+    return;
+  }
+  
+  // Open maps page without query parameters
+  const mapsUrl = 'weather-maps.html';
+  
+  // Open in new window with specific dimensions
+  const mapsWindow = window.open(
+    mapsUrl,
+    'weatherMaps',
+    'width=1200,height=800,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+  );
+  
+  // Focus the new window
+  if (mapsWindow) {
+    mapsWindow.focus();
+  }
+}
+
+// Show/hide weather maps button
+function updateWeatherMapsButton() {
+  const mapsBtn = document.getElementById('mapsBtn');
+  if (mapsBtn) {
+    if (window.currentWeatherData) {
+      mapsBtn.style.display = 'inline-block';
+    } else {
+      mapsBtn.style.display = 'none';
+    }
+  }
+}
+
+// Social Sharing Functions
+function updateSocialSharing() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  
+  // Update weather summary
+  document.getElementById('summaryLocation').textContent = data.name;
+  document.getElementById('summaryWeather').textContent = data.weather[0].description;
+  document.getElementById('summaryTemp').textContent = `${Math.round(data.main.temp)}${tempUnit}`;
+  
+  // Update summary icon based on weather - Fix the icon issue
+  const summaryIcon = document.querySelector('.summary-icon i');
+  if (summaryIcon) {
+    // Use the same icon logic as the main weather display
+    const iconClass = getWeatherIcon(data.weather[0].icon);
+    summaryIcon.className = iconClass;
+    
+    // Add animation class
+    summaryIcon.classList.add('weather-icon-animated');
+    
+    // Remove animation class after animation completes
+    setTimeout(() => {
+      summaryIcon.classList.remove('weather-icon-animated');
+    }, 1000);
+  }
+  
+  // Show social sharing section with enhanced animation
+  const socialSharing = document.getElementById('socialSharing');
+  socialSharing.classList.remove('hidden');
+  socialSharing.style.display = 'block';
+  
+  // Add entrance animation
+  setTimeout(() => {
+    socialSharing.classList.add('social-sharing-entrance');
+  }, 100);
+}
+
+function shareToTwitter() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  const temp = Math.round(data.main.temp);
+  
+  const text = `🌤️ Weather in ${data.name}: ${temp}${tempUnit}, ${data.weather[0].description} | Check out this amazing weather app! 🌍`;
+  const url = window.location.href;
+  
+  const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+  window.open(twitterUrl, '_blank', 'width=600,height=400');
+  
+  showShareMessage('Shared to Twitter! 🐦');
+}
+
+function shareToFacebook() {
+  if (!window.currentWeatherData) return;
+  
+  const url = window.location.href;
+  const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+  window.open(facebookUrl, '_blank', 'width=600,height=400');
+  
+  showShareMessage('Shared to Facebook! 📘');
+}
+
+function shareToWhatsApp() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  const temp = Math.round(data.main.temp);
+  
+  const text = `🌤️ Weather in ${data.name}: ${temp}${tempUnit}, ${data.weather[0].description} | Check out this amazing weather app! 🌍`;
+  const url = window.location.href;
+  
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`;
+  window.open(whatsappUrl, '_blank');
+  
+  showShareMessage('Shared to WhatsApp! 💬');
+}
+
+function shareToTelegram() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  const temp = Math.round(data.main.temp);
+  
+  const text = `🌤️ Weather in ${data.name}: ${temp}${tempUnit}, ${data.weather[0].description} | Check out this amazing weather app! 🌍`;
+  const url = window.location.href;
+  
+  const telegramUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+  window.open(telegramUrl, '_blank');
+  
+  showShareMessage('Shared to Telegram! 📱');
+}
+
+function copyToClipboard() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  const temp = Math.round(data.main.temp);
+  
+  const text = `🌤️ Weather in ${data.name}: ${temp}${tempUnit}, ${data.weather[0].description} | Check out this amazing weather app! 🌍 ${window.location.href}`;
+  
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showShareMessage('Link copied to clipboard! 📋');
+    }).catch(() => {
+      fallbackCopyTextToClipboard(text);
+    });
+  } else {
+    fallbackCopyTextToClipboard(text);
+  }
+}
+
+function fallbackCopyTextToClipboard(text) {
+  const textArea = document.createElement('textarea');
+  textArea.value = text;
+  textArea.style.position = 'fixed';
+  textArea.style.left = '-999999px';
+  textArea.style.top = '-999999px';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  
+  try {
+    document.execCommand('copy');
+    showShareMessage('Link copied to clipboard! 📋');
+  } catch (err) {
+    showShareMessage('Failed to copy link 😔');
+  }
+  
+  document.body.removeChild(textArea);
+}
+
+function shareViaEmail() {
+  if (!window.currentWeatherData) return;
+  
+  const data = window.currentWeatherData;
+  const unit = document.querySelector('input[name="unit"]:checked').value;
+  const tempUnit = unit === 'metric' ? '°C' : '°F';
+  const temp = Math.round(data.main.temp);
+  
+  const subject = `Weather in ${data.name} - ${temp}${tempUnit}`;
+  const body = `Hi there! 🌤️
+
+I wanted to share the current weather in ${data.name} with you:
+
+🌡️ Temperature: ${temp}${tempUnit}
+🌤️ Condition: ${data.weather[0].description}
+💨 Wind: ${data.wind.speed} ${unit === 'metric' ? 'm/s' : 'mph'}
+💧 Humidity: ${data.main.humidity}%
+
+Check out this amazing weather app: ${window.location.href}
+
+Best regards! 🌍`;
+
+  const emailUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = emailUrl;
+  
+  showShareMessage('Email client opened! 📧');
+}
+
+function showShareMessage(message) {
+  const shareMessage = document.getElementById('shareMessage');
+  const messageText = shareMessage.querySelector('span');
+  messageText.textContent = message;
+  
+  shareMessage.classList.add('show');
+  
+  setTimeout(() => {
+    shareMessage.classList.remove('show');
+  }, 3000);
+}
+
+// Advanced Animation Functions
+function addAdvancedAnimations() {
+  // Add ripple effect to all buttons
+  addRippleEffect();
+  
+  // Add magnetic effect to interactive elements
+  addMagneticEffect();
+  
+  // Add typewriter effect to titles
+  addTypewriterEffect();
+  
+  // Add sparkle effects
+  addSparkleEffects();
+}
+
+function addRippleEffect() {
+  const buttons = document.querySelectorAll('button');
+  
+  buttons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      const ripple = document.createElement('span');
+      const rect = this.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = e.clientX - rect.left - size / 2;
+      const y = e.clientY - rect.top - size / 2;
+      
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      ripple.classList.add('ripple');
+      
+      this.appendChild(ripple);
+      
+      setTimeout(() => {
+        ripple.remove();
+      }, 600);
+    });
+  });
+}
+
+function addMagneticEffect() {
+  const magneticElements = document.querySelectorAll('.weather-icon, .weather-item, button');
+  
+  magneticElements.forEach(element => {
+    element.addEventListener('mousemove', function(e) {
+      const rect = this.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      
+      this.style.transform = `translate(${x * 0.1}px, ${y * 0.1}px)`;
+    });
+    
+    element.addEventListener('mouseleave', function() {
+      this.style.transform = 'translate(0, 0)';
+    });
+  });
+}
+
+function addTypewriterEffect() {
+  const titles = document.querySelectorAll('h1, h2, h3');
+  
+  titles.forEach(title => {
+    const text = title.textContent;
+    title.textContent = '';
+    title.style.overflow = 'hidden';
+    title.style.borderRight = '2px solid var(--accent-color)';
+    
+    let i = 0;
+    const typeWriter = () => {
+      if (i < text.length) {
+        title.textContent += text.charAt(i);
+        i++;
+        setTimeout(typeWriter, 50);
+      } else {
+        title.style.borderRight = 'none';
+      }
+    };
+    
+    // Start typewriter effect when element comes into view
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          typeWriter();
+          observer.unobserve(entry.target);
+        }
+      });
+    });
+    
+    observer.observe(title);
+  });
+}
+
+function addSparkleEffects() {
+  // Add random sparkles to the page
+  setInterval(() => {
+    const sparkle = document.createElement('div');
+    sparkle.innerHTML = '✨';
+    sparkle.style.position = 'fixed';
+    sparkle.style.left = Math.random() * window.innerWidth + 'px';
+    sparkle.style.top = Math.random() * window.innerHeight + 'px';
+    sparkle.style.fontSize = '1.5rem';
+    sparkle.style.pointerEvents = 'none';
+    sparkle.style.zIndex = '1000';
+    sparkle.style.animation = 'sparkle 2s ease-in-out forwards';
+    
+    document.body.appendChild(sparkle);
+    
+    setTimeout(() => {
+      sparkle.remove();
+    }, 2000);
+  }, 3000);
+}
+
+// Scroll-triggered animations
+function addScrollAnimations() {
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.animation = 'zoomInOut 0.6s ease-out forwards';
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  // Observe all sections for scroll animations
+  const sections = document.querySelectorAll('.weather-card, .weather-tips, .weather-enhancements, .smart-features, .weather-charts, .weather-widgets, .social-sharing, .time-display');
+  sections.forEach(section => {
+    observer.observe(section);
+  });
+}
+
+// Initialize scroll animations when page loads
+document.addEventListener('DOMContentLoaded', () => {
+  addScrollAnimations();
+});
+
+// Time Display Functions
+let timeUpdateInterval;
+let currentTimezone = 'local';
+
+function initializeTimeDisplay() {
+  // Show time display section
+  const timeDisplay = document.getElementById('timeDisplay');
+  timeDisplay.classList.remove('hidden');
+  timeDisplay.style.display = 'block';
+  
+  // Initialize time format toggle
+  const timeFormatToggle = document.getElementById('timeFormatToggle');
+  timeFormatToggle.addEventListener('change', updateTimeDisplay);
+  
+  // Add immediate text update on toggle
+  timeFormatToggle.addEventListener('click', function() {
+    setTimeout(() => {
+      const toggleText = document.querySelector('.toggle-text');
+      if (toggleText) {
+        toggleText.textContent = this.checked ? '24h' : '12h';
+      }
+    }, 10);
+  });
+  
+  // Initialize timezone selector
+  const timezoneSelect = document.getElementById('timezoneSelect');
+  timezoneSelect.addEventListener('change', function() {
+    currentTimezone = this.value;
+    updateTimeDisplay();
+  });
+  
+  // Start time updates
+  updateTimeDisplay();
+  timeUpdateInterval = setInterval(updateTimeDisplay, 1000);
+  
+  // Set initial toggle text
+  const toggleText = document.querySelector('.toggle-text');
+  if (toggleText) {
+    toggleText.textContent = '12h'; // Default to 12-hour format
+  }
+}
+
+function updateTimeDisplay() {
+  const timeFormatToggle = document.getElementById('timeFormatToggle');
+  const is24Hour = timeFormatToggle.checked;
+  
+  // Update toggle text based on state
+  const toggleText = document.querySelector('.toggle-text');
+  if (toggleText) {
+    toggleText.textContent = is24Hour ? '24h' : '12h';
+  }
+  
+  let now;
+  
+  // Get time based on selected timezone
+  switch(currentTimezone) {
+    case 'UTC':
+      now = new Date();
+      break;
+    case 'GMT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/London"}));
+      break;
+    case 'EST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"}));
+      break;
+    case 'CST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Chicago"}));
+      break;
+    case 'MST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Denver"}));
+      break;
+    case 'PST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"}));
+      break;
+    case 'AST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Halifax"}));
+      break;
+    case 'HST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Pacific/Honolulu"}));
+      break;
+    case 'CET':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Paris"}));
+      break;
+    case 'EET':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Athens"}));
+      break;
+    case 'WET':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Lisbon"}));
+      break;
+    case 'IST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Kolkata"}));
+      break;
+    case 'JST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Tokyo"}));
+      break;
+    case 'KST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Seoul"}));
+      break;
+    case 'CST_CN':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Shanghai"}));
+      break;
+    case 'SGT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Singapore"}));
+      break;
+    case 'AEST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Australia/Sydney"}));
+      break;
+    case 'ACST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Australia/Adelaide"}));
+      break;
+    case 'AWST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Australia/Perth"}));
+      break;
+    case 'NZST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Pacific/Auckland"}));
+      break;
+    case 'SAST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Johannesburg"}));
+      break;
+    case 'EAT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Nairobi"}));
+      break;
+    case 'WAT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Africa/Lagos"}));
+      break;
+    case 'BRT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Sao_Paulo"}));
+      break;
+    case 'ART':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Argentina/Buenos_Aires"}));
+      break;
+    case 'CLT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Santiago"}));
+      break;
+    case 'PET':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Lima"}));
+      break;
+    case 'MST_MX':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Mexico_City"}));
+      break;
+    case 'COT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Bogota"}));
+      break;
+    case 'VET':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "America/Caracas"}));
+      break;
+    case 'GST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Dubai"}));
+      break;
+    case 'MSK':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Europe/Moscow"}));
+      break;
+    case 'YEKT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Yekaterinburg"}));
+      break;
+    case 'OMST':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Omsk"}));
+      break;
+    case 'KRAT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Krasnoyarsk"}));
+      break;
+    case 'IRKT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Irkutsk"}));
+      break;
+    case 'YAKT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Yakutsk"}));
+      break;
+    case 'VLAT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Vladivostok"}));
+      break;
+    case 'MAGT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Magadan"}));
+      break;
+    case 'ANAT':
+      now = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Anadyr"}));
+      break;
+    default:
+      now = new Date();
+  }
+  
+  // Format time
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+  let seconds = now.getSeconds();
+  let period = '';
+  
+  if (!is24Hour) {
+    period = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // Convert 0 to 12
+  }
+  
+  // Update time digits with leading zeros
+  document.getElementById('hourDisplay').textContent = hours.toString().padStart(2, '0');
+  document.getElementById('minuteDisplay').textContent = minutes.toString().padStart(2, '0');
+  document.getElementById('secondDisplay').textContent = seconds.toString().padStart(2, '0');
+  document.getElementById('periodDisplay').textContent = period;
+  
+  // Update date
+  const dateOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  const dateString = now.toLocaleDateString('en-US', dateOptions);
+  document.getElementById('dateDisplay').textContent = dateString;
+  
+  // Update day name
+  const dayOptions = { weekday: 'long' };
+  const dayName = now.toLocaleDateString('en-US', dayOptions);
+  document.getElementById('dayName').textContent = dayName;
+  
+  // Update timezone info
+  const timezoneNames = {
+    'local': 'Local Time',
+    'UTC': 'UTC (Coordinated Universal Time)',
+    'GMT': 'GMT (Greenwich Mean Time)',
+    'EST': 'EST (Eastern Standard Time)',
+    'CST': 'CST (Central Standard Time)',
+    'MST': 'MST (Mountain Standard Time)',
+    'PST': 'PST (Pacific Standard Time)',
+    'AST': 'AST (Atlantic Standard Time)',
+    'HST': 'HST (Hawaii Standard Time)',
+    'CET': 'CET (Central European Time)',
+    'EET': 'EET (Eastern European Time)',
+    'WET': 'WET (Western European Time)',
+    'IST': 'IST (India Standard Time)',
+    'JST': 'JST (Japan Standard Time)',
+    'KST': 'KST (Korea Standard Time)',
+    'CST_CN': 'CST (China Standard Time)',
+    'SGT': 'SGT (Singapore Time)',
+    'AEST': 'AEST (Australian Eastern Time)',
+    'ACST': 'ACST (Australian Central Time)',
+    'AWST': 'AWST (Australian Western Time)',
+    'NZST': 'NZST (New Zealand Standard Time)',
+    'SAST': 'SAST (South Africa Standard Time)',
+    'EAT': 'EAT (East Africa Time)',
+    'WAT': 'WAT (West Africa Time)',
+    'BRT': 'BRT (Brazil Time)',
+    'ART': 'ART (Argentina Time)',
+    'CLT': 'CLT (Chile Time)',
+    'PET': 'PET (Peru Time)',
+    'MST_MX': 'MST (Mexico Standard Time)',
+    'COT': 'COT (Colombia Time)',
+    'VET': 'VET (Venezuela Time)',
+    'GST': 'GST (Gulf Standard Time)',
+    'MSK': 'MSK (Moscow Time)',
+    'YEKT': 'YEKT (Yekaterinburg Time)',
+    'OMST': 'OMST (Omsk Time)',
+    'KRAT': 'KRAT (Krasnoyarsk Time)',
+    'IRKT': 'IRKT (Irkutsk Time)',
+    'YAKT': 'YAKT (Yakutsk Time)',
+    'VLAT': 'VLAT (Vladivostok Time)',
+    'MAGT': 'MAGT (Magadan Time)',
+    'ANAT': 'ANAT (Anadyr Time)'
+  };
+  document.getElementById('currentTimezone').textContent = timezoneNames[currentTimezone];
+  
+  // Update progress bar (percentage of day completed)
+  const totalSecondsInDay = 24 * 60 * 60;
+  const secondsElapsed = hours * 60 * 60 + minutes * 60 + seconds;
+  const progressPercentage = (secondsElapsed / totalSecondsInDay) * 100;
+  
+  document.getElementById('timeProgress').style.width = progressPercentage + '%';
+  document.getElementById('progressText').textContent = 
+    `${Math.round(progressPercentage)}% of day completed`;
+  
+  // Add animation class to seconds for smooth updates
+  const secondElement = document.getElementById('secondDisplay');
+  secondElement.classList.add('time-update');
+  setTimeout(() => {
+    secondElement.classList.remove('time-update');
+  }, 100);
+}
+
+// Show temperature map
+function showTemperatureMap() {
+  console.log('showTemperatureMap called');
+  
+  if (!weatherMap) {
+    console.log('Initializing new weather map');
+    initializeWeatherMap();
+  }
+  
+  // Remove existing layers
+  weatherMap.eachLayer((layer) => {
+    if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) {
+      return; // Keep base layer
+    }
+    weatherMap.removeLayer(layer);
+  });
+  
+  // Add temperature layer (simulated with colored circles)
+  if (window.currentWeatherData) {
+    const { lat, lon } = window.currentWeatherData.coord;
+    const temp = window.currentWeatherData.main.temp;
+    
+    // Create temperature color based on value
+    const color = getTemperatureColor(temp);
+    
+    L.circleMarker([lat, lon], {
+      radius: 15,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).addTo(weatherMap).bindPopup(`
+      <div style="text-align: center;">
+        <h4>${window.currentWeatherData.name}</h4>
+        <p style="font-size: 18px; font-weight: bold; color: ${color};">${temp}°${getUnitSymbol()}</p>
+        <p>${window.currentWeatherData.weather[0].main}</p>
+      </div>
+    `);
+    
+    weatherMap.setView([lat, lon], 10);
+  }
+  
+  currentMapType = 'temperature';
+  updateMapControls();
+  updateMapStats();
+}
+
+// Show precipitation map
+function showPrecipitationMap() {
+  if (!weatherMap) {
+    initializeWeatherMap();
+  }
+  
+  // Remove existing layers
+  weatherMap.eachLayer((layer) => {
+    if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) {
+      return; // Keep base layer
+    }
+    weatherMap.removeLayer(layer);
+  });
+  
+  // Add precipitation layer
+  if (window.currentWeatherData) {
+    const { lat, lon } = window.currentWeatherData.coord;
+    const humidity = window.currentWeatherData.main.humidity;
+    
+    // Create humidity color
+    const color = getHumidityColor(humidity);
+    
+    L.circleMarker([lat, lon], {
+      radius: 15,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).addTo(weatherMap).bindPopup(`
+      <div style="text-align: center;">
+        <h4>${window.currentWeatherData.name}</h4>
+        <p style="font-size: 18px; font-weight: bold; color: ${color};">${humidity}%</p>
+        <p>Humidity</p>
+      </div>
+    `);
+    
+    weatherMap.setView([lat, lon], 10);
+  }
+  
+  currentMapType = 'precipitation';
+  updateMapControls();
+  updateMapStats();
+}
+
+// Show wind map
+function showWindMap() {
+  if (!weatherMap) {
+    initializeWeatherMap();
+  }
+  
+  // Remove existing layers
+  weatherMap.eachLayer((layer) => {
+    if (layer instanceof L.TileLayer && layer._url.includes('openstreetmap')) {
+      return; // Keep base layer
+    }
+    weatherMap.removeLayer(layer);
+  });
+  
+  // Add wind layer
+  if (window.currentWeatherData) {
+    const { lat, lon } = window.currentWeatherData.coord;
+    const windSpeed = window.currentWeatherData.wind.speed;
+    
+    // Create wind speed color
+    const color = getWindColor(windSpeed);
+    
+    L.circleMarker([lat, lon], {
+      radius: 15,
+      fillColor: color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.8
+    }).addTo(weatherMap).bindPopup(`
+      <div style="text-align: center;">
+        <h4>${window.currentWeatherData.name}</h4>
+        <p style="font-size: 18px; font-weight: bold; color: ${color};">${windSpeed} ${getSpeedUnit()}</p>
+        <p>Wind Speed</p>
+      </div>
+    `);
+    
+    weatherMap.setView([lat, lon], 10);
+  }
+  
+  currentMapType = 'wind';
+  updateMapControls();
+  updateMapStats();
+}
+
+// Show satellite map
+function showSatelliteMap() {
+  if (!weatherMap) {
+    initializeWeatherMap();
+  }
+  
+  // Remove existing layers
+  weatherMap.eachLayer((layer) => {
+    weatherMap.removeLayer(layer);
+  });
+  
+  // Add satellite tiles
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '© Esri'
+  }).addTo(weatherMap);
+  
+  // Add location marker
+  if (window.currentWeatherData) {
+    const { lat, lon } = window.currentWeatherData.coord;
+    
+    L.marker([lat, lon]).addTo(weatherMap).bindPopup(`
+      <div style="text-align: center;">
+        <h4>${window.currentWeatherData.name}</h4>
+        <p>Satellite View</p>
+      </div>
+    `);
+    
+    weatherMap.setView([lat, lon], 10);
+  }
+  
+  currentMapType = 'satellite';
+  updateMapControls();
+  updateMapStats();
+}
+
+// Helper functions for map colors
+function getTemperatureColor(temp) {
+  if (temp < 0) return '#0066cc'; // Blue for cold
+  if (temp < 10) return '#3399ff'; // Light blue
+  if (temp < 20) return '#66cc66'; // Green
+  if (temp < 30) return '#ffcc00'; // Yellow
+  return '#ff6600'; // Orange for hot
+}
+
+function getHumidityColor(humidity) {
+  if (humidity < 30) return '#ff6600'; // Orange for dry
+  if (humidity < 60) return '#ffcc00'; // Yellow
+  if (humidity < 80) return '#3399ff'; // Blue
+  return '#0066cc'; // Dark blue for humid
+}
+
+function getWindColor(speed) {
+  if (speed < 5) return '#66cc66'; // Green for calm
+  if (speed < 10) return '#ffcc00'; // Yellow
+  if (speed < 15) return '#ff6600'; // Orange
+  return '#cc0000'; // Red for strong winds
+}
+
+// Update map controls
+function updateMapControls() {
+  const buttons = ['tempMapBtn', 'precipMapBtn', 'windMapBtn', 'satelliteMapBtn'];
+  buttons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.classList.remove('active');
+    }
+  });
+  
+  const activeBtn = document.getElementById(`${currentMapType}MapBtn`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+  }
+}
+
+// Update map statistics
+function updateMapStats() {
+  if (!weatherMap) return;
+  
+  const zoom = weatherMap.getZoom();
+  const center = weatherMap.getCenter();
+  
+  document.getElementById('mapType').textContent = currentMapType.charAt(0).toUpperCase() + currentMapType.slice(1);
+  document.getElementById('zoomLevel').textContent = zoom;
+  document.getElementById('coordinates').textContent = `${center.lat.toFixed(2)}, ${center.lng.toFixed(2)}`;
+}
+
+// Display weather maps section function moved to top of file (duplicate removed)
+
 // Debug function to show all sections
 function showAllSections() {
   console.log('Showing all sections for debugging...');
   
   // Show all main sections
   const sections = [
+    'timeDisplay',
     'weatherResult',
     'weatherTips', 
     'weatherEnhancements',
     'smartFeatures',
     'weatherCharts',
     'weatherWidgets',
+    'socialSharing',
     'forecastResult'
   ];
   
