@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather Info App</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <!-- Weather Background Container -->
+  <div id="weatherBackground" class="weather-background"></div>
+  
+  <!-- Welcome Modal -->
+  <div id="welcomeModal" class="welcome-modal">
+    <!-- Animated Background Elements -->
+    <div class="welcome-particles">
+      <div class="particle particle-1">☀️</div>
+      <div class="particle particle-2">☁️</div>
+      <div class="particle particle-3">🌤️</div>
+      <div class="particle particle-4">⛅</div>
+      <div class="particle particle-5">🌥️</div>
+      <div class="particle particle-6">🌈</div>
+    </div>
+    
+    <div class="welcome-content glass-effect animated-content">
+      <div class="welcome-header">
+        <div class="welcome-icon-container">
+          <i class="fas fa-cloud-sun welcome-icon weather-icon-3d floating-icon"></i>
+          <div class="icon-glow"></div>
+        </div>
+        <h1 class="welcome-title typing-text">Welcome to Weather Info!</h1>
+        <div class="welcome-subtitle">Your personal weather companion</div>
+      </div>
+      
+      <div class="welcome-form">
+        <div class="input-container">
+          <label for="userName" class="animated-label">What's your name?</label>
+          <div class="input-wrapper">
+            <input type="text" id="userName" placeholder="Enter your name..." maxlength="30" class="animated-input" />
+            <div class="input-glow"></div>
+          </div>
+        </div>
+        <button onclick="submitName()" id="submitNameBtn" class="animated-button">
+          <i class="fas fa-arrow-right"></i> Get Started
+          <div class="button-glow"></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App Container -->
+  <div class="container parallax-container" id="mainContainer">
+    <!-- Theme Toggle -->
+    <div class="theme-toggle">
+      <button id="themeToggle" onclick="toggleTheme()" class="theme-btn glass-effect">
+        <i class="fas fa-sun" id="themeIcon"></i>
+        <span id="themeText">Light Mode</span>
+      </button>
+    </div>
+
+    <div class="greeting-section animated-greeting">
+      <div class="greeting-header">
+        <div class="main-weather-icon">
+          <div class="weather-icon-container">
+            <i class="fas fa-cloud-sun main-icon floating-weather-icon"></i>
+            <div class="icon-glow-effect"></div>
+            <div class="sun-rays"></div>
+            <div class="time-effects">
+              <div class="day-effect">
+                <div class="sun-ray ray-1"></div>
+                <div class="sun-ray ray-2"></div>
+                <div class="sun-ray ray-3"></div>
+                <div class="sun-ray ray-4"></div>
+              </div>
+              <div class="evening-effect">
+                <div class="star star-1">✨</div>
+                <div class="star star-2">⭐</div>
+                <div class="star star-3">🌟</div>
+              </div>
+              <div class="night-effect">
+                <div class="moon-glow"></div>
+                <div class="star star-1">⭐</div>
+                <div class="star star-2">✨</div>
+                <div class="star star-3">🌟</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="title-container">
+          <h1 id="greetingText" class="animated-title">Weather Info</h1>
+          <div class="title-glow"></div>
+        </div>
+      </div>
+      <div class="greeting-container">
+        <p id="userGreeting" class="user-greeting animated-greeting-text"></p>
+        <div class="time-indicator">
+          <span class="time-emoji" id="timeEmoji">🌙</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-section">
+      <input type="text" id="cityInput" placeholder="Enter city name (e.g., London)" />
+      <button onclick="getWeather()" id="searchBtn">
+        <i class="fas fa-search"></i> Get Weather
+      </button>
+      <button onclick="getCurrentLocation()" id="locationBtn">
+        <i class="fas fa-location-arrow"></i> <span id="locationBtnText">My Location</span>
+      </button>
+      
+
+    </div>
+
+    <div class="unit-toggle">
+      <label>
+        <input type="radio" name="unit" value="metric" checked> Celsius
+      </label>
+      <label>
+        <input type="radio" name="unit" value="imperial"> Fahrenheit
+      </label>
+    </div>
+
+    <div id="loadingSpinner" class="loading-spinner hidden" style="display: none;">
+      <div class="spinner"></div>
+      <p id="loadingText">Scanning weather data...</p>
+    </div>
+
+    <div id="weatherResult" class="weather-card hidden glass-effect scroll-animate-bounce"></div>
+    
+    <!-- Weather Tips Section -->
+    <div id="weatherTips" class="weather-tips hidden glass-effect scroll-animate-left">
+      <h3><i class="fas fa-lightbulb"></i> Weather Tips</h3>
+      <div id="tipsContent" class="tips-content"></div>
+        </div>
+    
+    <!-- Weather Enhancements Section -->
+    <div id="weatherEnhancements" class="weather-enhancements hidden glass-effect scroll-animate-scale">
+      <h3><i class="fas fa-magic"></i> Weather Experience</h3>
+      <p class="enhancements-description">Immerse yourself in the weather with sounds, music, quotes, and achievements!</p>
+      <!-- Weather enhancements content will be populated by JavaScript -->
+    </div>
+    
+    <!-- Smart Features Section -->
+    <div id="smartFeatures" class="smart-features hidden glass-effect scroll-animate-flip">
+      <h3><i class="fas fa-brain"></i> Smart Features</h3>
+      <p class="smart-description">AI-powered weather insights and personalized recommendations</p>
+      
+      <!-- Smart Recommendations -->
+      <div class="smart-section">
+        <h4><i class="fas fa-lightbulb"></i> Smart Recommendations</h4>
+        <div class="recommendations-grid" id="smartRecommendations">
+          <!-- Recommendations will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Favorite Cities -->
+      <div class="smart-section">
+        <h4><i class="fas fa-heart"></i> Favorite Cities</h4>
+        <div class="favorites-controls">
+          <button onclick="addToFavorites()" class="favorite-btn" id="addFavoriteBtn">
+            <i class="fas fa-plus"></i> Add Current City
+          </button>
+          <button onclick="manageFavorites()" class="favorite-btn">
+            <i class="fas fa-cog"></i> Manage Favorites
+          </button>
+        </div>
+        <div class="favorites-grid" id="favoritesGrid">
+          <!-- Favorite cities will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Weather Comparison -->
+      <div class="smart-section">
+        <h4><i class="fas fa-balance-scale"></i> Weather Comparison</h4>
+        <div class="comparison-controls">
+          <div class="comparison-inputs">
+            <input type="text" id="city1Input" placeholder="Enter first city..." class="comparison-input">
+            <input type="text" id="city2Input" placeholder="Enter second city..." class="comparison-input">
+            <button onclick="compareCities()" class="compare-btn">
+              <i class="fas fa-search"></i> Compare
+            </button>
+          </div>
+        </div>
+        <div class="comparison-results" id="comparisonResults">
+          <!-- Comparison results will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Travel Planning -->
+      <div class="smart-section">
+        <h4><i class="fas fa-plane"></i> Travel Planning</h4>
+        <div class="travel-controls">
+          <div class="travel-inputs">
+            <input type="text" id="destinationInput" placeholder="Enter destination city..." class="travel-input">
+            <input type="date" id="travelDateInput" class="travel-input">
+            <button onclick="planTravel()" class="travel-btn">
+              <i class="fas fa-route"></i> Plan Trip
+            </button>
+          </div>
+        </div>
+        <div class="travel-results" id="travelResults">
+          <!-- Travel planning results will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Weather History -->
+      <div class="smart-section">
+        <h4><i class="fas fa-history"></i> Weather History</h4>
+        <div class="history-controls">
+          <select id="historyCitySelect" class="history-select">
+            <option value="">Select a city...</option>
+          </select>
+          <select id="historyPeriodSelect" class="history-select">
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 3 months</option>
+          </select>
+          <button onclick="loadWeatherHistory()" class="history-btn">
+            <i class="fas fa-chart-line"></i> Load History
+          </button>
+        </div>
+        <div class="history-results" id="historyResults">
+          <!-- Weather history will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- Weather Charts Section -->
+    <div id="weatherCharts" class="weather-charts hidden glass-effect scroll-animate-right">
+      <h3><i class="fas fa-chart-line"></i> Weather Analytics</h3>
+      <p class="charts-description">Interactive charts showing weather trends and patterns</p>
+      
+      <div class="charts-controls">
+        <button onclick="showTemperatureChart()" class="chart-btn active" id="tempChartBtn">
+          <i class="fas fa-thermometer-half"></i> Temperature
+        </button>
+        <button onclick="showHumidityChart()" class="chart-btn" id="humidityChartBtn">
+          <i class="fas fa-tint"></i> Humidity
+        </button>
+        <button onclick="showWindChart()" class="chart-btn" id="windChartBtn">
+          <i class="fas fa-wind"></i> Wind Speed
+        </button>
+        <button onclick="showPressureChart()" class="chart-btn" id="pressureChartBtn">
+          <i class="fas fa-compress-arrows-alt"></i> Pressure
+        </button>
+      </div>
+
+      <div class="chart-container">
+        <canvas id="weatherChart" width="400" height="200"></canvas>
+      </div>
+
+      <div class="chart-info">
+        <div class="chart-stats">
+          <div class="stat-item">
+            <span class="stat-label">Average</span>
+            <span class="stat-value" id="avgValue">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">High</span>
+            <span class="stat-value" id="highValue">--</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Low</span>
+            <span class="stat-value" id="lowValue">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Weather Widgets Section -->
+    <div id="weatherWidgets" class="weather-widgets hidden glass-effect scroll-animate-bounce">
+      <h3><i class="fas fa-share-alt"></i> Weather Widgets</h3>
+      <p class="widget-description">Create beautiful weather cards to share on your website or social media!</p>
+      
+      <div class="widget-controls">
+        <button onclick="createWidget()" class="widget-btn">
+          <i class="fas fa-plus"></i> Create Widget
+        </button>
+        <button onclick="downloadWidget()" class="widget-btn" id="downloadBtn" disabled>
+          <i class="fas fa-download"></i> Download Widget
+        </button>
+      </div>
+
+      <div class="widget-preview" id="widgetPreview">
+        <h4>Widget Preview</h4>
+        <div id="widgetCard" class="widget-card">
+          <div class="widget-placeholder">
+            <i class="fas fa-cloud-sun"></i>
+            <p>Click "Create Widget" to generate a weather widget</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="widget-info" id="widgetInfo" style="display: none;">
+        <div class="info-card">
+          <h4><i class="fas fa-image"></i> Widget Ready!</h4>
+          <p>Your animated weather widget has been created successfully. You can now download it as a PNG image and share it anywhere!</p>
+          <div class="info-steps">
+            <div class="step">
+              <span class="step-number">1</span>
+              <span>Click "Download Widget" to save the PNG image</span>
+            </div>
+            <div class="step">
+              <span class="step-number">2</span>
+              <span>Share the image on social media, websites, or messaging apps</span>
+            </div>
+            <div class="step">
+              <span class="step-number">3</span>
+              <span>The widget includes beautiful animations and weather data</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="forecastResult" class="forecast-section hidden glass-effect scroll-animate-scale"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
